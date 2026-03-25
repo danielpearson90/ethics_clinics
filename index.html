@@ -514,13 +514,26 @@
       <!-- Step 1: Choose consultation type -->
       <div class="step active" id="step1">
         <p class="step-title">Choose consultation type</p>
-        <div class="card" data-type="Type A" onclick="selectType(this)">
-          <div class="card-title">Type A</div>
-          <div class="card-subtitle">Consultation type A</div>
+        <div
+          class="card"
+          data-type="Document Review"
+          onclick="selectType(this)"
+        >
+          <div class="card-title">Document Review</div>
+          <div class="card-subtitle">
+            Submit your documents for review at least 24 hours before your
+            consultation
+          </div>
         </div>
-        <div class="card" data-type="Type B" onclick="selectType(this)">
-          <div class="card-title">Type B</div>
-          <div class="card-subtitle">Consultation type B</div>
+        <div
+          class="card"
+          data-type="Standard Consultation"
+          onclick="selectType(this)"
+        >
+          <div class="card-title">Standard Consultation</div>
+          <div class="card-subtitle">
+            General consultation with a consultant
+          </div>
         </div>
       </div>
 
@@ -638,7 +651,7 @@
       // CONFIGURATION — update this URL after deploying Code.gs
       // ============================================================
       var SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbwD-eVPteIQ2Cbg9C8OKMyuTB9BtnjDElcZle7UlLspvV531zAkgHqOx-rsNKlphqYm5g/exec";
+        "https://script.google.com/macros/s/AKfycbyRVgAebOMWtwoYKUv5GRDTDu_F5YPHVIKsKS2qDRZx-qqUcwz2ERDoZ89EuWqAaAEt/exec";
 
       // ---- State ----
       var state = {
