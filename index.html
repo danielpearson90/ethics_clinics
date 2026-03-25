@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Consultation Booking</title>
+    <style>
+      /* ---- Custom Properties ---- */
+      :root {
+        --color-primary: #2563eb;
+        --color-primary-hover: #1d4ed8;
+        --color-primary-light: #eff6ff;
+        --color-success: #16a34a;
+        --color-success-light: #f0fdf4;
+        --color-error: #dc2626;
+        --color-error-light: #fef2f2;
+        --color-text: #1e293b;
+        --color-text-muted: #64748b;
+        --color-border: #e2e8f0;
+        --color-bg: #f8fafc;
+        --color-card: #ffffff;
+        --radius: 8px;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      /* ---- Reset & Base ---- */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: var(--color-bg);
+        color: var(--color-text);
+        line-height: 1.5;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 24px 16px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 8px;
+      }
+
+      .progress {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 24px;
+      }
+
+      .progress-step {
+        flex: 1;
+        height: 4px;
+        background: var(--color-border);
+        border-radius: 2px;
+        transition: background 0.3s;
+      }
+
+      .progress-step.active {
+        background: var(--color-primary);
+      }
+
+      /* ---- Steps ---- */
+      .step {
+        display: none;
+      }
+      .step.active {
+        display: block;
+      }
+
+      .step-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+
+      /* ---- Cards ---- */
+      .card {
+        background: var(--color-card);
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+        min-height: 44px;
+      }
+
+      .card:hover {
+        border-color: var(--color-primary);
+      }
+      .card.selected {
+        border-color: var(--color-primary);
+        background: var(--color-primary-light);
+        box-shadow: var(--shadow);
+      }
+
+      .card-title {
+        font-weight: 600;
+        font-size: 1rem;
+      }
+
+      .card-subtitle {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+        margin-top: 2px;
+      }
+
+      /* ---- Consultant Accordion ---- */
+      .consultant-card {
+        background: var(--color-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        margin-bottom: 12px;
+        overflow: hidden;
+      }
+
+      .consultant-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        cursor: pointer;
+        min-height: 44px;
+        font-weight: 600;
+      }
+
+      .consultant-header:hover {
+        background: var(--color-primary-light);
+      }
+
+      .consultant-header .arrow {
+        transition: transform 0.2s;
+        color: var(--color-text-muted);
+      }
+
+      .consultant-card.open .arrow {
+        transform: rotate(90deg);
+      }
+
+      .consultant-body {
+        display: none;
+        padding: 0 16px 16px;
+      }
+
+      .consultant-card.open .consultant-body {
+        display: block;
+      }
+
+      .date-group {
+        margin-bottom: 12px;
+      }
+
+      .date-label {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .time-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .time-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 72px;
+        min-height: 44px;
+        padding: 8px 14px;
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius);
+        background: var(--color-card);
+        font-size: 0.9375rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .time-chip:hover {
+        border-color: var(--color-primary);
+        background: var(--color-primary-light);
+      }
+
+      .time-chip.selected {
+        border-color: var(--color-primary);
+        background: var(--color-primary);
+        color: #fff;
+      }
+
+      /* ---- Form ---- */
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 4px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius);
+        font-size: 1rem;
+        min-height: 44px;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: var(--color-primary);
+      }
+
+      .form-group .field-error {
+        color: var(--color-error);
+        font-size: 0.8125rem;
+        margin-top: 4px;
+        display: none;
+      }
+
+      /* ---- Summary ---- */
+      .summary-card {
+        background: var(--color-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .summary-row:last-child {
+        border-bottom: none;
+      }
+
+      .summary-label {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+      }
+
+      .summary-value {
+        font-weight: 600;
+        text-align: right;
+        font-size: 0.875rem;
+      }
+
+      /* ---- Confirmation ---- */
+      .success-box {
+        background: var(--color-success-light);
+        border: 1px solid var(--color-success);
+        border-radius: var(--radius);
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 16px;
+      }
+
+      .success-box .check {
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+
+      .zoom-link-box {
+        background: var(--color-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+
+      .zoom-link-box label {
+        font-size: 0.8125rem;
+        color: var(--color-text-muted);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .zoom-link-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .zoom-link-row input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        font-size: 0.875rem;
+        background: var(--color-bg);
+        min-height: 44px;
+      }
+
+      .btn-copy {
+        padding: 8px 16px;
+        background: var(--color-primary);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 0.875rem;
+        min-height: 44px;
+        white-space: nowrap;
+      }
+
+      .btn-copy:hover {
+        background: var(--color-primary-hover);
+      }
+
+      /* ---- Buttons ---- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 12px 24px;
+        border: none;
+        border-radius: var(--radius);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        min-height: 44px;
+        transition: background 0.2s;
+      }
+
+      .btn-primary {
+        background: var(--color-primary);
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        background: var(--color-primary-hover);
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: var(--color-primary);
+        border: 2px solid var(--color-primary);
+      }
+
+      .btn-secondary:hover {
+        background: var(--color-primary-light);
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .btn-row .btn {
+        flex: 1;
+      }
+
+      /* ---- Loading ---- */
+      .loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 16px;
+        color: var(--color-text-muted);
+      }
+
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid var(--color-border);
+        border-top-color: var(--color-primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 12px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ---- Error ---- */
+      .error-box {
+        background: var(--color-error-light);
+        border: 1px solid var(--color-error);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 16px;
+        color: var(--color-error);
+        text-align: center;
+      }
+
+      /* ---- No slots ---- */
+      .no-slots {
+        text-align: center;
+        padding: 48px 16px;
+        color: var(--color-text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Student Consultation Booking</h1>
+
+      <!-- Progress bar -->
+      <div class="progress">
+        <div class="progress-step active" data-step="1"></div>
+        <div class="progress-step" data-step="2"></div>
+        <div class="progress-step" data-step="3"></div>
+        <div class="progress-step" data-step="4"></div>
+        <div class="progress-step" data-step="5"></div>
+      </div>
+
+      <!-- Step 1: Choose consultation type -->
+      <div class="step active" id="step1">
+        <p class="step-title">Choose consultation type</p>
+        <div class="card" data-type="Type A" onclick="selectType(this)">
+          <div class="card-title">Type A</div>
+          <div class="card-subtitle">Consultation type A</div>
+        </div>
+        <div class="card" data-type="Type B" onclick="selectType(this)">
+          <div class="card-title">Type B</div>
+          <div class="card-subtitle">Consultation type B</div>
+        </div>
+      </div>
+
+      <!-- Step 2: Select consultant + time -->
+      <div class="step" id="step2">
+        <p class="step-title">Select a consultant and time</p>
+        <div id="slotsLoading" class="loading">
+          <div class="spinner"></div>
+          <span>Loading available times...</span>
+        </div>
+        <div id="slotsError" class="error-box" style="display: none"></div>
+        <div id="slotsContainer"></div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(1)">Back</button>
+          <button
+            class="btn btn-primary"
+            id="step2Next"
+            disabled
+            onclick="goToStep(3)"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Enter details -->
+      <div class="step" id="step3">
+        <p class="step-title">Your details</p>
+        <div class="form-group">
+          <label for="studentName">Full name</label>
+          <input
+            type="text"
+            id="studentName"
+            placeholder="e.g. Alex Johnson"
+            autocomplete="name"
+          />
+          <div class="field-error" id="nameError">Please enter your name</div>
+        </div>
+        <div class="form-group">
+          <label for="studentEmail">Email address</label>
+          <input
+            type="email"
+            id="studentEmail"
+            placeholder="e.g. alex@student.edu.au"
+            autocomplete="email"
+          />
+          <div class="field-error" id="emailError">
+            Please enter a valid email address
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(2)">Back</button>
+          <button class="btn btn-primary" onclick="validateAndProceed()">
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 4: Review & confirm -->
+      <div class="step" id="step4">
+        <p class="step-title">Review your booking</p>
+        <div class="summary-card" id="summaryCard"></div>
+        <div id="bookingError" class="error-box" style="display: none"></div>
+        <div id="bookingButtons" class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(3)">Back</button>
+          <button
+            class="btn btn-primary"
+            id="confirmBtn"
+            onclick="confirmBooking()"
+          >
+            Confirm Booking
+          </button>
+        </div>
+        <div id="bookingLoading" class="loading" style="display: none">
+          <div class="spinner"></div>
+          <span>Confirming your booking...</span>
+        </div>
+      </div>
+
+      <!-- Step 5: Confirmation -->
+      <div class="step" id="step5">
+        <div class="success-box">
+          <div class="check">&#10003;</div>
+          <strong>Booking confirmed!</strong>
+          <p
+            style="
+              margin-top: 4px;
+              color: var(--color-text-muted);
+              font-size: 0.875rem;
+            "
+          >
+            A confirmation email has been sent to your inbox.
+          </p>
+        </div>
+        <div class="summary-card" id="confirmSummary"></div>
+        <div class="zoom-link-box">
+          <label>Zoom meeting link</label>
+          <div class="zoom-link-row">
+            <input type="text" id="zoomLinkField" readonly />
+            <button class="btn-copy" onclick="copyZoomLink()">Copy</button>
+          </div>
+        </div>
+        <button
+          class="btn btn-secondary"
+          onclick="bookAnother()"
+          style="margin-top: 8px"
+        >
+          Book Another Consultation
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // ============================================================
+      // CONFIGURATION — update this URL after deploying Code.gs
+      // ============================================================
+      var SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbwD-eVPteIQ2Cbg9C8OKMyuTB9BtnjDElcZle7UlLspvV531zAkgHqOx-rsNKlphqYm5g/exec";
+
+      // ---- State ----
+      var state = {
+        consultationType: "",
+        consultantId: "",
+        consultantName: "",
+        date: "",
+        startTime: "",
+        endTime: "",
+        rowIndex: null,
+        studentName: "",
+        studentEmail: "",
+        slotsData: null,
+      };
+
+      var currentStep = 1;
+
+      // ---- Navigation ----
+      function goToStep(step) {
+        document
+          .getElementById("step" + currentStep)
+          .classList.remove("active");
+        document.getElementById("step" + step).classList.add("active");
+        currentStep = step;
+
+        // Update progress bar
+        document.querySelectorAll(".progress-step").forEach(function (el) {
+          el.classList.toggle("active", parseInt(el.dataset.step) <= step);
+        });
+
+        // Step-specific actions
+        if (step === 2) fetchSlots();
+        if (step === 4) renderSummary();
+      }
+
+      // ---- Step 1: Consultation type ----
+      function selectType(el) {
+        document.querySelectorAll("#step1 .card").forEach(function (c) {
+          c.classList.remove("selected");
+        });
+        el.classList.add("selected");
+        state.consultationType = el.dataset.type;
+        // Auto-advance after short delay
+        setTimeout(function () {
+          goToStep(2);
+        }, 200);
+      }
+
+      // ---- Step 2: Fetch & render slots ----
+      function fetchSlots() {
+        var container = document.getElementById("slotsContainer");
+        var loading = document.getElementById("slotsLoading");
+        var errorBox = document.getElementById("slotsError");
+        var nextBtn = document.getElementById("step2Next");
+
+        container.innerHTML = "";
+        loading.style.display = "flex";
+        errorBox.style.display = "none";
+        nextBtn.disabled = true;
+
+        // Clear previous slot selection
+        state.consultantId = "";
+        state.consultantName = "";
+        state.date = "";
+        state.startTime = "";
+        state.endTime = "";
+        state.rowIndex = null;
+
+        fetch(SCRIPT_URL + "?action=getSlots")
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            loading.style.display = "none";
+            if (data.error) {
+              errorBox.textContent = data.error;
+              errorBox.style.display = "block";
+              return;
+            }
+            state.slotsData = data.slots;
+            renderSlots(data.slots);
+          })
+          .catch(function () {
+            loading.style.display = "none";
+            errorBox.innerHTML =
+              'Failed to load available times. <button class="btn btn-secondary" style="width:auto;margin-top:8px;padding:8px 16px;" onclick="fetchSlots()">Retry</button>';
+            errorBox.style.display = "block";
+          });
+      }
+
+      function renderSlots(slots) {
+        var container = document.getElementById("slotsContainer");
+        var ids = Object.keys(slots);
+
+        if (ids.length === 0) {
+          container.innerHTML =
+            '<div class="no-slots">No available time slots at the moment. Please check back later.</div>';
+          return;
+        }
+
+        // Sort consultants by name
+        ids.sort(function (a, b) {
+          return slots[a].name.localeCompare(slots[b].name);
+        });
+
+        var html = "";
+        ids.forEach(function (cid) {
+          var c = slots[cid];
+          var dates = Object.keys(c.dates).sort();
+          html += '<div class="consultant-card" data-cid="' + cid + '">';
+          html +=
+            '<div class="consultant-header" onclick="toggleConsultant(this)">';
+          html += "<span>" + escapeHtml(c.name) + "</span>";
+          html += '<span class="arrow">&#9654;</span>';
+          html += "</div>";
+          html += '<div class="consultant-body">';
+
+          dates.forEach(function (d) {
+            html += '<div class="date-group">';
+            html += '<div class="date-label">' + formatDate(d) + "</div>";
+            html += '<div class="time-chips">';
+            c.dates[d].forEach(function (slot) {
+              html +=
+                '<button class="time-chip" data-cid="' +
+                cid +
+                '" data-cname="' +
+                escapeAttr(c.name) +
+                '" data-date="' +
+                d +
+                '" data-start="' +
+                slot.startTime +
+                '" data-end="' +
+                slot.endTime +
+                '" data-row="' +
+                slot.rowIndex +
+                '" onclick="selectSlot(this)">';
+              html += slot.startTime;
+              html += "</button>";
+            });
+            html += "</div></div>";
+          });
+
+          html += "</div></div>";
+        });
+
+        container.innerHTML = html;
+      }
+
+      function toggleConsultant(header) {
+        var card = header.parentElement;
+        card.classList.toggle("open");
+      }
+
+      function selectSlot(chip) {
+        // Deselect all chips
+        document.querySelectorAll(".time-chip").forEach(function (c) {
+          c.classList.remove("selected");
+        });
+        chip.classList.add("selected");
+
+        state.consultantId = chip.dataset.cid;
+        state.consultantName = chip.dataset.cname;
+        state.date = chip.dataset.date;
+        state.startTime = chip.dataset.start;
+        state.endTime = chip.dataset.end;
+        state.rowIndex = parseInt(chip.dataset.row);
+
+        document.getElementById("step2Next").disabled = false;
+      }
+
+      // ---- Step 3: Validate details ----
+      function validateAndProceed() {
+        var name = document.getElementById("studentName").value.trim();
+        var email = document.getElementById("studentEmail").value.trim();
+        var valid = true;
+
+        if (!name) {
+          document.getElementById("nameError").style.display = "block";
+          valid = false;
+        } else {
+          document.getElementById("nameError").style.display = "none";
+        }
+
+        if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+          document.getElementById("emailError").style.display = "block";
+          valid = false;
+        } else {
+          document.getElementById("emailError").style.display = "none";
+        }
+
+        if (valid) {
+          state.studentName = name;
+          state.studentEmail = email;
+          goToStep(4);
+        }
+      }
+
+      // ---- Step 4: Review ----
+      function renderSummary() {
+        var html =
+          "" +
+          summaryRow("Consultation type", state.consultationType) +
+          summaryRow("Consultant", state.consultantName) +
+          summaryRow("Date", formatDate(state.date)) +
+          summaryRow("Time", state.startTime + " – " + state.endTime) +
+          summaryRow("Your name", state.studentName) +
+          summaryRow("Email", state.studentEmail);
+        document.getElementById("summaryCard").innerHTML = html;
+        document.getElementById("bookingError").style.display = "none";
+        document.getElementById("bookingButtons").style.display = "flex";
+        document.getElementById("bookingLoading").style.display = "none";
+      }
+
+      function summaryRow(label, value) {
+        return (
+          '<div class="summary-row"><span class="summary-label">' +
+          escapeHtml(label) +
+          '</span><span class="summary-value">' +
+          escapeHtml(value) +
+          "</span></div>"
+        );
+      }
+
+      // ---- Step 4: Confirm booking ----
+      function confirmBooking() {
+        var errorBox = document.getElementById("bookingError");
+        var buttons = document.getElementById("bookingButtons");
+        var loading = document.getElementById("bookingLoading");
+
+        errorBox.style.display = "none";
+        buttons.style.display = "none";
+        loading.style.display = "flex";
+
+        var payload = JSON.stringify({
+          consultantId: state.consultantId,
+          date: state.date,
+          startTime: state.startTime,
+          rowIndex: state.rowIndex,
+          studentName: state.studentName,
+          studentEmail: state.studentEmail,
+          consultationType: state.consultationType,
+        });
+
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: payload,
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            loading.style.display = "none";
+            if (data.error) {
+              errorBox.textContent = data.error;
+              errorBox.innerHTML +=
+                ' <button class="btn btn-secondary" style="width:auto;margin-top:8px;padding:8px 16px;" onclick="goToStep(2)">Choose another time</button>';
+              errorBox.style.display = "block";
+              buttons.style.display = "flex";
+              return;
+            }
+            // Success — show step 5
+            showConfirmation(data);
+          })
+          .catch(function () {
+            loading.style.display = "none";
+            errorBox.textContent = "Something went wrong. Please try again.";
+            errorBox.style.display = "block";
+            buttons.style.display = "flex";
+          });
+      }
+
+      // ---- Step 5: Success ----
+      function showConfirmation(data) {
+        var html =
+          "" +
+          summaryRow("Consultation type", data.consultationType) +
+          summaryRow("Consultant", data.consultantName) +
+          summaryRow("Date", formatDate(data.date)) +
+          summaryRow("Time", data.startTime);
+        document.getElementById("confirmSummary").innerHTML = html;
+        document.getElementById("zoomLinkField").value = data.zoomLink;
+        goToStep(5);
+      }
+
+      function copyZoomLink() {
+        var field = document.getElementById("zoomLinkField");
+        field.select();
+        document.execCommand("copy");
+        var btn = field.nextElementSibling;
+        btn.textContent = "Copied!";
+        setTimeout(function () {
+          btn.textContent = "Copy";
+        }, 2000);
+      }
+
+      function bookAnother() {
+        // Reset state
+        state = {
+          consultationType: "",
+          consultantId: "",
+          consultantName: "",
+          date: "",
+          startTime: "",
+          endTime: "",
+          rowIndex: null,
+          studentName: "",
+          studentEmail: "",
+          slotsData: null,
+        };
+        document.getElementById("studentName").value = "";
+        document.getElementById("studentEmail").value = "";
+        document.querySelectorAll("#step1 .card").forEach(function (c) {
+          c.classList.remove("selected");
+        });
+        goToStep(1);
+      }
+
+      // ---- Helpers ----
+      function formatDate(iso) {
+        var parts = iso.split("-");
+        var d = new Date(
+          parseInt(parts[0]),
+          parseInt(parts[1]) - 1,
+          parseInt(parts[2]),
+        );
+        var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        var months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        return (
+          days[d.getDay()] +
+          " " +
+          d.getDate() +
+          " " +
+          months[d.getMonth()] +
+          " " +
+          parts[0]
+        );
+      }
+
+      function escapeHtml(str) {
+        var div = document.createElement("div");
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+      }
+
+      function escapeAttr(str) {
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+    </script>
+  </body>
+</html>
