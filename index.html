@@ -207,6 +207,76 @@
         color: #fff;
       }
 
+      /* ---- Slot rows (date → time → consultants) ---- */
+      .slot-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .slot-row:last-child {
+        border-bottom: none;
+      }
+
+      .slot-time {
+        font-weight: 600;
+        font-size: 0.9375rem;
+        min-width: 50px;
+        padding-top: 10px;
+        color: var(--color-text);
+      }
+
+      .slot-consultants {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        flex: 1;
+      }
+
+      .consultant-chip {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 8px 14px;
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius);
+        background: var(--color-card);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        min-height: 44px;
+        transition: all 0.15s;
+      }
+
+      .chip-name {
+        font-weight: 600;
+      }
+
+      .chip-expertise {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--color-text-muted);
+        margin-top: 1px;
+      }
+
+      .consultant-chip.selected .chip-expertise {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .consultant-chip:hover {
+        border-color: var(--color-primary);
+        background: var(--color-primary-light);
+      }
+
+      .consultant-chip.selected {
+        border-color: var(--color-primary);
+        background: var(--color-primary);
+        color: #fff;
+      }
+
       /* ---- Form ---- */
       .form-group {
         margin-bottom: 16px;
@@ -669,43 +739,72 @@
           return;
         }
 
-        // Sort consultants by name
-        ids.sort(function (a, b) {
-          return slots[a].name.localeCompare(slots[b].name);
-        });
-
-        var html = "";
+        // Regroup: consultant-keyed data → date → time → list of consultants
+        var byDate = {}; // { "2026-04-10": { "16:00": [ {cid, cname, endTime, rowIndex}, ... ] } }
         ids.forEach(function (cid) {
           var c = slots[cid];
-          var dates = Object.keys(c.dates).sort();
-          html += '<div class="consultant-card" data-cid="' + cid + '">';
+          var dates = Object.keys(c.dates);
+          dates.forEach(function (d) {
+            if (!byDate[d]) byDate[d] = {};
+            c.dates[d].forEach(function (slot) {
+              var key = slot.startTime;
+              if (!byDate[d][key]) byDate[d][key] = [];
+              byDate[d][key].push({
+                cid: cid,
+                cname: c.name,
+                expertise: c.expertise || "",
+                endTime: slot.endTime,
+                rowIndex: slot.rowIndex,
+              });
+            });
+          });
+        });
+
+        var sortedDates = Object.keys(byDate).sort();
+        var html = "";
+        sortedDates.forEach(function (d, idx) {
+          var openClass = idx === 0 ? " open" : "";
+          html += '<div class="consultant-card' + openClass + '">';
           html +=
             '<div class="consultant-header" onclick="toggleConsultant(this)">';
-          html += "<span>" + escapeHtml(c.name) + "</span>";
+          html += "<span>" + formatDate(d) + "</span>";
           html += '<span class="arrow">&#9654;</span>';
           html += "</div>";
           html += '<div class="consultant-body">';
 
-          dates.forEach(function (d) {
-            html += '<div class="date-group">';
-            html += '<div class="date-label">' + formatDate(d) + "</div>";
-            html += '<div class="time-chips">';
-            c.dates[d].forEach(function (slot) {
+          var sortedTimes = Object.keys(byDate[d]).sort();
+          sortedTimes.forEach(function (t) {
+            var consultants = byDate[d][t];
+            // Sort consultants by name
+            consultants.sort(function (a, b) {
+              return a.cname.localeCompare(b.cname);
+            });
+            html += '<div class="slot-row">';
+            html += '<div class="slot-time">' + t + "</div>";
+            html += '<div class="slot-consultants">';
+            consultants.forEach(function (c) {
               html +=
-                '<button class="time-chip" data-cid="' +
-                cid +
+                '<button class="consultant-chip" data-cid="' +
+                c.cid +
                 '" data-cname="' +
-                escapeAttr(c.name) +
+                escapeAttr(c.cname) +
                 '" data-date="' +
                 d +
                 '" data-start="' +
-                slot.startTime +
+                t +
                 '" data-end="' +
-                slot.endTime +
+                c.endTime +
                 '" data-row="' +
-                slot.rowIndex +
+                c.rowIndex +
                 '" onclick="selectSlot(this)">';
-              html += slot.startTime;
+              html +=
+                '<span class="chip-name">' + escapeHtml(c.cname) + "</span>";
+              if (c.expertise) {
+                html +=
+                  '<span class="chip-expertise">' +
+                  escapeHtml(c.expertise) +
+                  "</span>";
+              }
               html += "</button>";
             });
             html += "</div></div>";
@@ -723,8 +822,7 @@
       }
 
       function selectSlot(chip) {
-        // Deselect all chips
-        document.querySelectorAll(".time-chip").forEach(function (c) {
+        document.querySelectorAll(".consultant-chip").forEach(function (c) {
           c.classList.remove("selected");
         });
         chip.classList.add("selected");
